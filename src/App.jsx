@@ -43,6 +43,8 @@ const sectors = [
 function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [active, setActive] = useState('anasayfa')
 
@@ -79,9 +81,30 @@ function App() {
 
   const closeMenu = () => setMenuOpen(false)
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    setSubmitted(true)
+    setIsSubmitting(true)
+    setFormError('')
+
+    try {
+      const formData = new FormData(event.currentTarget)
+      formData.append('access_key', '4ff8f442-9b99-41d5-a289-e8bb8d9f3a26')
+      formData.append('subject', 'AlofyAI web sitesi yeni bilgi talebi')
+
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await response.json()
+
+      if (!response.ok || !data.success) throw new Error(data.message || 'Form gönderilemedi.')
+      setSubmitted(true)
+      event.currentTarget.reset()
+    } catch (error) {
+      setFormError('Form gönderilemedi. Lütfen tekrar deneyin veya bizi telefonla arayın.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -137,7 +160,7 @@ function App() {
 
         <section id="neden" className="why-section section-pad"><div className="page-width grid gap-12 px-5 lg:grid-cols-[1fr_1.1fr] lg:items-center lg:px-8"><div className="why-visual"><div className="why-circle" /><div className="compare-card compare-human"><div className="compare-icon"><Icon name="users" size={23} /></div><div><small>Geleneksel yöntem</small><strong>Çalışma saatleriyle sınırlı</strong></div></div><div className="compare-card compare-ai"><div className="compare-icon"><Icon name="sparkle" size={23} /></div><div><small>AlofyAI</small><strong>Her an, her çağrıya hazır</strong></div><span className="best-choice">En iyi seçenek</span></div></div><div className="why-copy"><div className="section-kicker">Daha çok ulaşılabilirlik</div><h2>Büyük görünmek için<br /><span>büyük bir ekip gerekmez.</span></h2><p>Tam zamanlı bir resepsiyonistin maliyetinin çok altında, 7/24 çalışan profesyonel bir telefon deneyimine sahip olun.</p><div className="why-list"><div><Icon name="check" size={17} /> Daha profesyonel bir işletme imajı</div><div><Icon name="check" size={17} /> Daha az kaçan randevu, daha çok memnuniyet</div><div><Icon name="check" size={17} /> İşinize odaklanmanız için daha fazla zaman</div></div><a className="primary-button" href="#iletisim">AlofyAI ile tanışın <Icon name="arrow" size={18} /></a></div></div></section>
 
-        <section id="iletisim" className="contact-section section-pad"><div className="page-width grid gap-12 px-5 lg:grid-cols-[.9fr_1.1fr] lg:px-8"><div className="contact-intro"><div className="section-kicker light-kicker">Birlikte başlayalım</div><h2>Telefonunuzun<br /><span>yeni sesi AlofyAI.</span></h2><p>İşletmenize en uygun çözüm ve fiyatlandırma için bizi arayın veya formu doldurun. Size kısa sürede dönüş yapalım.</p><a href="tel:05551659502" className="big-phone"><span><Icon name="phone" size={21} /></span>{phoneNumber}</a><div className="contact-note"><Icon name="clock" size={18} /> Hafta içi ve hafta sonu bize ulaşabilirsiniz.</div></div><form className="contact-form" onSubmit={handleSubmit}><div className="form-head"><h3>Bilgi almak istiyorum</h3><p>Formu doldurun, sizi arayalım.</p></div>{submitted ? <div className="success-message"><div><Icon name="check" size={28} /></div><h3>Talebiniz bize ulaştı.</h3><p>En kısa sürede sizi arayacağız. İlginiz için teşekkür ederiz.</p><button type="button" onClick={() => setSubmitted(false)} className="reset-button">Yeni bir form doldur</button></div> : <><div className="form-grid"><label>İsim Soyisim<input required placeholder="Adınız Soyadınız" /></label><label>İşletme Adı<input required placeholder="İşletmenizin adı" /></label><label>Telefon Numaranız<input required type="tel" placeholder="0555 000 00 00" /></label><label>Sektörünüz<select required defaultValue=""><option value="" disabled>Seçiniz</option><option>Berber / Kuaför</option><option>Güzellik Salonu</option><option>Otel / Pansiyon</option><option>Sağlık Merkezi</option><option>Diğer</option></select></label></div><button className="form-button" type="submit">Fiyat ve Bilgi Al <Icon name="arrow" size={18} /></button><small className="form-privacy">Bilgileriniz yalnızca size ulaşmak için kullanılır.</small></>}</form></div></section>
+        <section id="iletisim" className="contact-section section-pad"><div className="page-width grid gap-12 px-5 lg:grid-cols-[.9fr_1.1fr] lg:px-8"><div className="contact-intro"><div className="section-kicker light-kicker">Birlikte başlayalım</div><h2>Telefonunuzun<br /><span>yeni sesi AlofyAI.</span></h2><p>İşletmenize en uygun çözüm ve fiyatlandırma için bizi arayın veya formu doldurun. Size kısa sürede dönüş yapalım.</p><a href="tel:05551659502" className="big-phone"><span><Icon name="phone" size={21} /></span>{phoneNumber}</a><div className="contact-note"><Icon name="clock" size={18} /> Hafta içi ve hafta sonu bize ulaşabilirsiniz.</div></div><form className="contact-form" onSubmit={handleSubmit}><div className="form-head"><h3>Bilgi almak istiyorum</h3><p>Formu doldurun, sizi arayalım.</p></div>{submitted ? <div className="success-message"><div><Icon name="check" size={28} /></div><h3>Talebiniz bize ulaştı.</h3><p>En kısa sürede sizi arayacağız. İlginiz için teşekkür ederiz.</p><button type="button" onClick={() => { setSubmitted(false); setFormError('') }} className="reset-button">Yeni bir form doldur</button></div> : <><div className="form-grid"><label>İsim Soyisim<input name="name" required placeholder="Adınız Soyadınız" /></label><label>İşletme Adı<input name="business_name" required placeholder="İşletmenizin adı" /></label><label>Telefon Numaranız<input name="phone" required type="tel" placeholder="0555 000 00 00" /></label><label>E-posta Adresiniz<input name="email" required type="email" placeholder="ornek@email.com" /></label><label>Sektörünüz<select name="sector" required defaultValue=""><option value="" disabled>Seçiniz</option><option>Berber / Kuaför</option><option>Güzellik Salonu</option><option>Otel / Pansiyon</option><option>Sağlık Merkezi</option><option>Diğer</option></select></label><label>Mesajınız<textarea name="message" required placeholder="Size nasıl yardımcı olabiliriz?" /></label></div>{formError && <p className="form-error" role="alert">{formError}</p>}<button className="form-button" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Gönderiliyor...' : <>Fiyat ve Bilgi Al <Icon name="arrow" size={18} /></>}</button><small className="form-privacy">Bilgileriniz yalnızca size ulaşmak için kullanılır.</small></>}</form></div></section>
       </main>
       <footer><div className="page-width flex flex-col gap-6 px-5 py-9 sm:flex-row sm:items-center sm:justify-between lg:px-8"><div className="footer-brand"><div className="brand-lockup"><span className="logo-symbol"><Icon name="sparkle" size={18} /></span><span className="logo-word">Alofy<span>AI</span></span></div><span>İşletmenizin hiç susmayan yardımcısı.</span></div><div className="footer-right"><a href="tel:05551659502"><Icon name="phone" size={15} /> {phoneNumber}</a><span>Tüm hakları saklıdır.</span></div></div></footer><a href="tel:05551659502" className="sticky-call"><Icon name="phone" size={18} /> <span>Bizi Arayın</span></a>
     </div>
