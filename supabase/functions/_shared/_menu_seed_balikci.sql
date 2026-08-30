@@ -1,0 +1,115 @@
+-- TEK SEFERLİK veri yükleme betiği — bir migration DEĞİL, sadece SQL
+-- Editor'e yapıştırıp bir kez çalıştırmanız için. Tekrar çalıştırırsanız
+-- kategoriler ve ürünler İKİNCİ KEZ eklenir (idempotent değildir).
+--
+-- İşletme: Celer (restaurant, slug: celer-ory0)
+
+with target as (
+  select '2f18f8ab-afbf-4d56-8694-57947b9f6c5e'::uuid as business_id
+),
+cats as (
+  insert into menu_categories (business_id, name, sort_order)
+  select business_id, c.name, c.sort_order
+  from target, (values
+    ('Meze Çeşitleri', 1),
+    ('Çorbalar', 2),
+    ('Ara Sıcaklar', 3),
+    ('Navita Fırın', 4),
+    ('Izgara Çeşitleri', 5),
+    ('Tava Çeşitleri', 6),
+    ('Salata Çeşitleri', 7),
+    ('Tatlılar', 8),
+    ('İçecekler', 9)
+  ) as c(name, sort_order)
+  returning id, name
+)
+insert into menu_items (business_id, category_id, name, price)
+select t.business_id, cats.id, m.name, m.price
+from target t, cats,
+(values
+  ('Meze Çeşitleri', 'Levrek Marin', 340.00),
+  ('Meze Çeşitleri', 'Pembe Sultan', 225.00),
+  ('Meze Çeşitleri', 'Hardallı Patates', 185.00),
+  ('Meze Çeşitleri', 'Tahinli Patlıcan', 210.00),
+  ('Meze Çeşitleri', 'Maş Piyazı', 175.00),
+  ('Meze Çeşitleri', 'Fava', 190.00),
+  ('Meze Çeşitleri', 'Girit', 330.00),
+  ('Meze Çeşitleri', 'Karnıkara', 185.00),
+  ('Meze Çeşitleri', 'Tahinli Pancar', 230.00),
+  ('Meze Çeşitleri', 'Kereviz Salatası', 185.00),
+  ('Meze Çeşitleri', 'Patlıcan Herse', 195.00),
+  ('Meze Çeşitleri', 'Köpoğlu', 240.00),
+  ('Meze Çeşitleri', 'Acılı Rum Ezme', 340.00),
+  ('Meze Çeşitleri', 'Cevizli Kabak', 210.00),
+  ('Meze Çeşitleri', 'Havuç Tarator', 190.00),
+  ('Meze Çeşitleri', 'Biber Borani', 190.00),
+  ('Meze Çeşitleri', 'Jumbo Karides Söğüş', 460.00),
+  ('Meze Çeşitleri', 'Deniz Mahsülleri Söğüş', 500.00),
+  ('Meze Çeşitleri', 'Deniz Börülcesi', 200.00),
+  ('Meze Çeşitleri', 'Yağ Biberi', 185.00),
+  ('Meze Çeşitleri', 'Atom', 180.00),
+  ('Meze Çeşitleri', 'Yunan Kızı', 210.00),
+  ('Meze Çeşitleri', 'Kuru domates', 290.00),
+  ('Meze Çeşitleri', 'Navita Karides Sögüş', 460.00),
+  ('Meze Çeşitleri', 'Yoğurtlu Fava', 225.00),
+  ('Meze Çeşitleri', 'Ispanak Borani', 200.00),
+  ('Meze Çeşitleri', 'Navita Şakşuka', 200.00),
+  ('Meze Çeşitleri', 'ENGİNAR KALBİ', 350.00),
+  ('Çorbalar', 'Balık Çorbası', 230.00),
+  ('Ara Sıcaklar', 'Sıcak Ot', 260.00),
+  ('Ara Sıcaklar', 'Levrek Simit (Adet)', 230.00),
+  ('Ara Sıcaklar', 'Karides Güveç', 660.00),
+  ('Ara Sıcaklar', 'Karides Cızlama', 600.00),
+  ('Ara Sıcaklar', 'Kalamar', 550.00),
+  ('Ara Sıcaklar', 'Jumbo Şiş Karides (1 Şiş)', 210.00),
+  ('Ara Sıcaklar', 'Ahtapot Kol Izgara (Adet)', 1000.00),
+  ('Ara Sıcaklar', 'Deniz Mahsülleri Kroket', 425.00),
+  ('Navita Fırın', 'Navita Fırın Çipura(Kg)', 1800.00),
+  ('Navita Fırın', 'Navita Fırın Levrek(Kg)', 1800.00),
+  ('Navita Fırın', 'Navita Levrek Buğulama(Kg)', 1900.00),
+  ('Izgara Çeşitleri', 'Çinekop Kuş 2 adet (4 Çinekop)', 1350.00),
+  ('Izgara Çeşitleri', 'Deniz Levrek Izgara Kg', 1800.00),
+  ('Izgara Çeşitleri', 'Deniz Çipura Izgara Kg', 1800.00),
+  ('Izgara Çeşitleri', 'Deniz Çipura Izgara', 800.00),
+  ('Izgara Çeşitleri', 'Deniz Levrek Izgara', 800.00),
+  ('Izgara Çeşitleri', 'Somon Izgara', 800.00),
+  ('Izgara Çeşitleri', 'Izgara Köfte', 800.00),
+  ('Izgara Çeşitleri', 'Sardalya Izgara', 450.00),
+  ('Izgara Çeşitleri', 'Çinekop Izgara', 1000.00),
+  ('Izgara Çeşitleri', 'Kalkan Izgara (KG)', 4500.00),
+  ('Izgara Çeşitleri', 'Lüfer Izgara (adet)', 1300.00),
+  ('Tava Çeşitleri', 'Hamsi Tava', 450.00),
+  ('Tava Çeşitleri', 'İstavrit Tava', 450.00),
+  ('Tava Çeşitleri', 'Tekir Tava', 850.00),
+  ('Tava Çeşitleri', 'Mezgit Tava', 875.00),
+  ('Tava Çeşitleri', 'Palamut Takoz', 1100.00),
+  ('Tava Çeşitleri', 'Fish and Chips', 800.00),
+  ('Tava Çeşitleri', 'Kalkan Tava (KG)', 4500.00),
+  ('Salata Çeşitleri', 'Boğaziçi Salata', 275.00),
+  ('Salata Çeşitleri', 'Gevurdağı Salata', 255.00),
+  ('Salata Çeşitleri', 'Eftalya Salatası', 270.00),
+  ('Salata Çeşitleri', 'Roka Salatası', 265.00),
+  ('Salata Çeşitleri', 'Çoban Salatası', 240.00),
+  ('Salata Çeşitleri', 'Mevsim Salatası', 240.00),
+  ('Tatlılar', 'Dondurmalı Portakallı İrmik Helvası', 300.00),
+  ('Tatlılar', 'Kaymaklı İncir Tatlısı', 275.00),
+  ('Tatlılar', 'Fırın Helva', 245.00),
+  ('Tatlılar', 'Kaymaklı Kabak Tatlısı', 250.00),
+  ('Tatlılar', 'Sufle', 350.00),
+  ('Tatlılar', 'Kestavita', 375.00),
+  ('Tatlılar', 'Kaymaklı Peynir Tatlısı', 265.00),
+  ('İçecekler', 'Damla Cam Şise Su (750 ml)', 95.00),
+  ('İçecekler', 'Damla Cam Şise Su (400 ml)', 50.00),
+  ('İçecekler', 'Damla Cam Şise Maden Suyu', 65.00),
+  ('İçecekler', 'Coca Cola Cam Şişe', 110.00),
+  ('İçecekler', 'Fanta Cam Şişe', 110.00),
+  ('İçecekler', 'Sprite Cam Şişe', 110.00),
+  ('İçecekler', 'Şalgam Cam Şişe (Acılı)', 120.00),
+  ('İçecekler', 'Şalgam Cam Şişe (Acısız)', 120.00),
+  ('İçecekler', 'Coca Cola Zero Cam Şişe', 110.00),
+  ('İçecekler', 'Cappy Karışık Meyve Suyu', 110.00),
+  ('İçecekler', 'Cappy Vişne Meyve Suyu', 110.00),
+  ('İçecekler', 'Fuse Tea Şeftali', 110.00),
+  ('İçecekler', 'Fuse Tea Limon', 110.00)
+) as m(category_name, name, price)
+where cats.name = m.category_name;
