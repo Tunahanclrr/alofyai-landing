@@ -1,5 +1,6 @@
 import { resolveOrCreateCustomer, translateDbError } from './shared.js'
 import { localToUtc, utcToLocalParts, addMinutes } from '../../_shared/time.js'
+import { sendPushToBusiness } from '../../_shared/push.js'
 
 const SLOT_STEP_MIN = 15
 const MAX_SLOTS_RETURNED = 12
@@ -146,6 +147,32 @@ export async function create_appointment(ctx, args) {
     p_notes: null,
   })
   if (error) return { error: translateDbError(error.message) }
+
+  // İşletme sahibi telefonu kapalı/uygulama arka planda olsa bile anında
+  // haberdar olsun diye — Vapi'nin kendi bildirim sistemi yok, bu tamamen
+  // bizim push altyapımız (bkz. _shared/push.js). try/catch İLE SARILI:
+  // randevu zaten oluşturuldu, bir push/DB hatası (örn. notifications
+  // tablosu henüz yoksa) bu tool-call'ı asla "başarısız" gibi göstermemeli
+  // — smart-endpoint'in dış try/catch'i aksi halde bunu müşteriye hataymış
+  // gibi yansıtırdı.
+  try {
+    const [{ data: service }, { data: staff }] = await Promise.all([
+      ctx.supabaseAdmin.from('services').select('name').eq('id', service_id).maybeSingle(),
+      ctx.supabaseAdmin.from('staff').select('full_name').eq('id', staff_id).maybeSingle(),
+    ])
+    const { data: business } = await ctx.supabaseAdmin.from('businesses').select('timezone').eq('id', ctx.businessId).maybeSingle()
+    const { date: localDate, time: localTime } = utcToLocalParts(new Date(appointment.starts_at), business?.timezone || 'Europe/Istanbul')
+    await sendPushToBusiness(ctx.supabaseAdmin, ctx.businessId, {
+      type: 'appointment.created',
+      title: 'Yeni Randevu',
+      body: `${customer.full_name ?? 'Bir müşteri'} — ${localDate} ${localTime}, ${service?.name ?? 'Hizmet'} (${staff?.full_name ?? 'Personel'})`,
+      url: '/app/appointments',
+      customerId: customer.id,
+    })
+  } catch (pushErr) {
+    console.error('create_appointment: push bildirimi gönderilemedi', pushErr)
+  }
+
   return { success: true, appointment_id: appointment.id, starts_at: appointment.starts_at, ends_at: appointment.ends_at }
 }
 

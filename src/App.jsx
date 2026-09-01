@@ -15,6 +15,7 @@ import RestaurantMenuPage from './app/RestaurantMenuPage'
 import CalendarPage from './app/CalendarPage'
 import BusinessCallsPage from './app/CallsPage'
 import BusinessSettingsPage from './app/BusinessSettingsPage'
+import NotificationsPage from './app/NotificationsPage'
 import AdminDashboardPage from './admin/AdminDashboardPage'
 import BusinessesListPage from './admin/BusinessesListPage'
 import BusinessDetailPage from './admin/BusinessDetailPage'
@@ -47,6 +48,7 @@ function App() {
           <Route path="packages" element={<ComingSoonPage title="Paketler" phase="Faz 5" />} />
           <Route path="payments" element={<ComingSoonPage title="Ödemeler" phase="Faz 5" />} />
           <Route path="calls" element={<BusinessCallsPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
           <Route path="reports" element={<ComingSoonPage title="Raporlar" phase="Faz 5" />} />
           <Route path="settings/business" element={<BusinessSettingsPage />} />
           <Route path="restaurant/reservations" element={<RestaurantReservationsPage />} />

@@ -1,6 +1,7 @@
 import { resolveOrCreateCustomer, translateDbError } from './shared.js'
 import { normalizeTrPhone } from '../../_shared/phone.js'
 import { localToUtc, addMinutes, isValidDateStr, isValidTimeStr } from '../../_shared/time.js'
+import { sendPushToBusiness } from '../../_shared/push.js'
 
 // Restaurant tool'ları BİLEREK "date" + "time" ayrı alanlar olarak tasarlandı
 // (tek bir ISO 8601 timestamp DEĞİL) — bir sesli asistanın "yarın akşam
@@ -208,6 +209,26 @@ export async function create_reservation(ctx, args) {
     p_table_preference: featureTags,
   })
   if (error) return { error: translateDbError(error.message) }
+
+  // İşletme sahibi telefonu kapalı/uygulama arka planda olsa bile anında
+  // haberdar olsun diye — Vapi'nin kendi bildirim sistemi yok, bu tamamen
+  // bizim push altyapımız (bkz. _shared/push.js). try/catch İLE SARILI:
+  // rezervasyon zaten oluşturuldu, bir push/DB hatası (örn. notifications
+  // tablosu henüz yoksa) bu tool-call'ı asla "başarısız" gibi göstermemeli
+  // — smart-endpoint'in dış try/catch'i aksi halde bunu müşteriye hataymış
+  // gibi yansıtırdı.
+  try {
+    await sendPushToBusiness(ctx.supabaseAdmin, ctx.businessId, {
+      type: 'reservation.created',
+      title: 'Yeni Rezervasyon',
+      body: `${customer.full_name ?? 'Bir müşteri'} — ${date} ${time}, ${partySize} kişi, ${table.label}`,
+      url: '/app/restaurant/reservations',
+      customerId: customer.id,
+    })
+  } catch (pushErr) {
+    console.error('create_reservation: push bildirimi gönderilemedi', pushErr)
+  }
+
   return {
     success: true,
     reservation_id: reservation.id,
