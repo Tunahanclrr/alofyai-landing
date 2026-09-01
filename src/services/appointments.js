@@ -25,6 +25,26 @@ export function listStaffDayAppointments(businessId, staffId, dayStartIso, dayEn
     .neq('appointments.status', 'cancelled')
 }
 
+// Bildirimden ("Yeni Randevu" push'una tıklayınca) DOĞRUDAN o randevunun
+// detayına atlayabilmek için — listAppointmentsForDay'in tarih aralığına
+// bağlı olmadan, tek bir appointment_id ile aynı şekle sahip satırı getirir.
+// Çoklu hizmetli randevularda (Ombre + Kesim gibi) ilk satırı döner — takvim
+// listesindeki tıklamada da zaten aynı davranış kullanılıyor (bkz. CalendarPage
+// ListView: onSelect(first)).
+export function getAppointmentEntryById(appointmentId) {
+  return supabase
+    .from('appointment_services')
+    .select(
+      'id, appointment_id, staff_id, service_id, starts_at, ends_at, price, ' +
+        'services(name), staff(full_name, color), ' +
+        'appointments!inner(id, status, source, notes, customer_id, customers(full_name, phone))'
+    )
+    .eq('appointment_id', appointmentId)
+    .order('starts_at')
+    .limit(1)
+    .maybeSingle()
+}
+
 export function listCustomerAppointments(customerId) {
   return supabase
     .from('appointment_services')

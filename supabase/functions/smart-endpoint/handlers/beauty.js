@@ -166,7 +166,7 @@ export async function create_appointment(ctx, args) {
       type: 'appointment.created',
       title: 'Yeni Randevu',
       body: `${customer.full_name ?? 'Bir müşteri'} — ${localDate} ${localTime}, ${service?.name ?? 'Hizmet'} (${staff?.full_name ?? 'Personel'})`,
-      url: '/app/appointments',
+      url: `/app/appointments?appointment=${appointment.id}`,
       customerId: customer.id,
     })
   } catch (pushErr) {

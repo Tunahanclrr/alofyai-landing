@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useBusiness } from '../context/BusinessContext'
 import { usePermission } from '../hooks/usePermission'
 import { usePushSubscription } from '../hooks/usePushSubscription'
@@ -36,6 +37,7 @@ function StatusPill({ status }) {
 }
 
 export default function NotificationsPage() {
+  const navigate = useNavigate()
   const { activeBusinessId } = useBusiness()
   const { allowed: canSendManual } = usePermission('settings.manage')
   const { supported, enabled, loading: pushLoading, error: pushError, subscribe, unsubscribe } = usePushSubscription()
@@ -152,17 +154,24 @@ export default function NotificationsPage() {
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {notifications.map((n) => (
-              <div key={n.id} className="flex items-start justify-between gap-3 px-5 py-3.5">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{TYPE_LABELS[n.type] ?? n.type}</p>
-                  <p className="mt-0.5 text-sm font-medium text-ink">{n.title}</p>
-                  <p className="mt-0.5 text-sm text-slate-600">{n.body}</p>
-                  <p className="mt-1 text-xs text-slate-400">{new Date(n.created_at).toLocaleString('tr-TR')}</p>
+            {notifications.map((n) => {
+              const targetUrl = n.payload?.url
+              return (
+                <div
+                  key={n.id}
+                  onClick={targetUrl ? () => navigate(targetUrl) : undefined}
+                  className={`flex items-start justify-between gap-3 px-5 py-3.5 ${targetUrl ? 'cursor-pointer hover:bg-mist' : ''}`}
+                >
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{TYPE_LABELS[n.type] ?? n.type}</p>
+                    <p className="mt-0.5 text-sm font-medium text-ink">{n.title}</p>
+                    <p className="mt-0.5 text-sm text-slate-600">{n.body}</p>
+                    <p className="mt-1 text-xs text-slate-400">{new Date(n.created_at).toLocaleString('tr-TR')}</p>
+                  </div>
+                  <StatusPill status={n.status} />
                 </div>
-                <StatusPill status={n.status} />
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </Card>

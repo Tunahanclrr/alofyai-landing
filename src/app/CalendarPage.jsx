@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useBusiness } from '../context/BusinessContext'
-import { listAppointmentsForDay } from '../services/appointments'
+import { listAppointmentsForDay, getAppointmentEntryById } from '../services/appointments'
 import { listStaff } from '../services/staff'
 import { listServices } from '../services/services'
 import Card from '../components/Card'
@@ -47,6 +48,7 @@ function timeLabel(iso) {
 
 export default function CalendarPage() {
   const { activeBusinessId } = useBusiness()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [date, setDate] = useState(() => startOfDay(new Date()))
   const [viewMode, setViewMode] = useState('list')
   const [staffFilter, setStaffFilter] = useState('all')
@@ -65,6 +67,28 @@ export default function CalendarPage() {
       setServices((sv.data ?? []).filter((svc) => svc.is_active))
     })
   }, [activeBusinessId])
+
+  // Bir bildirime ("Yeni Randevu" push'u ya da Bildirimler sayfasındaki
+  // satır) tıklanınca ?appointment=<id> ile buraya düşülür — o randevuyu şu
+  // an ekranda gösterilen tarih aralığından BAĞIMSIZ olarak doğrudan getirip
+  // detay modalını açar.
+  useEffect(() => {
+    const appointmentId = searchParams.get('appointment')
+    if (!appointmentId) return
+    getAppointmentEntryById(appointmentId).then(({ data, error }) => {
+      if (error) console.error('bildirimden randevu açılamadı', error)
+      if (data) setDetailAppointment(data)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.get('appointment')])
+
+  const closeDetail = () => {
+    setDetailAppointment(null)
+    if (searchParams.get('appointment')) {
+      searchParams.delete('appointment')
+      setSearchParams(searchParams, { replace: true })
+    }
+  }
 
   const rangeStart = viewMode === 'week' ? startOfWeek(date) : startOfDay(date)
   const rangeEnd = new Date(rangeStart)
@@ -206,7 +230,7 @@ export default function CalendarPage() {
 
       <AppointmentDetailModal
         open={Boolean(detailAppointment)}
-        onClose={() => setDetailAppointment(null)}
+        onClose={closeDetail}
         onChanged={loadRange}
         appointmentService={detailAppointment}
       />

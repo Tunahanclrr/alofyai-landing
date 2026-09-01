@@ -65,6 +65,21 @@ export function listReservationsForRange(businessId, startIso, endIso) {
     .order('starts_at')
 }
 
+// Bildirimden ("Yeni Rezervasyon" push'una tıklayınca) DOĞRUDAN o
+// rezervasyonun detayına atlayabilmek için — listReservationsForRange'in
+// tarih aralığına bağlı olmadan, tek bir reservation_id ile aynı şekle
+// sahip satırı getirir.
+export function getReservationEntryById(reservationId) {
+  return supabase
+    .from('reservation_tables')
+    .select(
+      'id, reservation_id, table_id, starts_at, ends_at, restaurant_tables(label, capacity), ' +
+        'reservations!inner(id, status, source, party_size, notes, customer_id, estimated_duration, buffer_minutes, estimated_end_time, seated_at, actual_end_time, customers(full_name, phone))'
+    )
+    .eq('reservation_id', reservationId)
+    .maybeSingle()
+}
+
 export function findAvailableTables(businessId, startsAtIso, endsAtIso, partySize) {
   return supabase.rpc('find_available_tables', {
     p_business_id: businessId,

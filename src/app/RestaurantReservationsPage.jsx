@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useBusiness } from '../context/BusinessContext'
-import { listReservationsForRange, listTables } from '../services/restaurant'
+import { listReservationsForRange, listTables, getReservationEntryById } from '../services/restaurant'
 import Card from '../components/Card'
 import Button from '../components/Button'
 import EmptyState from '../components/EmptyState'
@@ -56,6 +57,7 @@ function timeLabel(iso) {
 
 export default function RestaurantReservationsPage() {
   const { activeBusinessId } = useBusiness()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [date, setDate] = useState(() => startOfDay(new Date()))
   const [viewMode, setViewMode] = useState('list')
   const [tableFilter, setTableFilter] = useState('all')
@@ -70,6 +72,28 @@ export default function RestaurantReservationsPage() {
     if (!activeBusinessId) return
     listTables(activeBusinessId).then(({ data }) => setTables((data ?? []).filter((t) => t.is_active)))
   }, [activeBusinessId])
+
+  // Bir bildirime ("Yeni Rezervasyon" push'u ya da Bildirimler sayfasındaki
+  // satır) tıklanınca ?reservation=<id> ile buraya düşülür — o rezervasyonu
+  // şu an ekranda gösterilen tarih aralığından BAĞIMSIZ olarak doğrudan
+  // getirip detay modalını açar.
+  useEffect(() => {
+    const reservationId = searchParams.get('reservation')
+    if (!reservationId) return
+    getReservationEntryById(reservationId).then(({ data, error }) => {
+      if (error) console.error('bildirimden rezervasyon açılamadı', error)
+      if (data) setDetailEntry(data)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.get('reservation')])
+
+  const closeDetail = () => {
+    setDetailEntry(null)
+    if (searchParams.get('reservation')) {
+      searchParams.delete('reservation')
+      setSearchParams(searchParams, { replace: true })
+    }
+  }
 
   const rangeStart = viewMode === 'week' ? startOfWeek(date) : startOfDay(date)
   const rangeEnd = new Date(rangeStart)
@@ -183,7 +207,7 @@ export default function RestaurantReservationsPage() {
       </div>
 
       <ReservationModal open={bookingOpen} onClose={() => setBookingOpen(false)} onBooked={loadRange} defaultStart={date} />
-      <ReservationDetailModal open={Boolean(detailEntry)} onClose={() => setDetailEntry(null)} onChanged={loadRange} entry={detailEntry} />
+      <ReservationDetailModal open={Boolean(detailEntry)} onClose={closeDetail} onChanged={loadRange} entry={detailEntry} />
     </div>
   )
 }

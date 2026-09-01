@@ -48,9 +48,12 @@ export async function sendPushToBusiness(supabaseAdmin, businessId, { type, titl
     status = anySucceeded ? 'sent' : 'failed'
   }
 
+  // url, notifications.payload'a da yazılır — sadece anlık push için değil,
+  // "Bildirimler" sayfasındaki geçmiş listesinde de o satıra tıklanınca AYNI
+  // hedefe (örn. ilgili rezervasyon) gidebilmek için (bkz. NotificationsPage.jsx).
   await supabaseAdmin
     .from('notifications')
-    .insert({ business_id: businessId, customer_id: customerId, type, title, body, status, created_by: createdBy })
+    .insert({ business_id: businessId, customer_id: customerId, type, title, body, status, payload: url ? { url } : {}, created_by: createdBy })
 
   return { status }
 }

@@ -222,7 +222,7 @@ export async function create_reservation(ctx, args) {
       type: 'reservation.created',
       title: 'Yeni Rezervasyon',
       body: `${customer.full_name ?? 'Bir müşteri'} — ${date} ${time}, ${partySize} kişi, ${table.label}`,
-      url: '/app/restaurant/reservations',
+      url: `/app/restaurant/reservations?reservation=${reservation.id}`,
       customerId: customer.id,
     })
   } catch (pushErr) {
